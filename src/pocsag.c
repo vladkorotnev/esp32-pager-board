@@ -62,7 +62,7 @@ int add_message(POCSAG_tx *p_tx,uint32_t capcode,uint32_t func,uint8_t *msg, int
 	uint32_t cw_capcode,cw_mask;
 	POCSAG_batch *cur_btch;
 
-	frame = (func * 2) + 1;
+	frame = 1;
 	cw_capcode = capcode << 2;
 	cw_capcode |= (func & 3);
 	cw_capcode <<= 11;

@@ -93,9 +93,9 @@ void send_message() {
 	int invert;
 	
 	cap_code = 102805; //102805, fn=0 -> Super Visor
-	func = 0;
+	func = 3;
 	isNum = 0;
-	invert = 0;
+	invert = 1;
 	
 	ESP_LOGI(LOG_TAG, "=== Begin send ===");
 	
@@ -108,7 +108,7 @@ void send_message() {
 		ESP_LOGE(LOG_TAG, "Failed to append message");
 	}
 	
-	if (pocsag_out(p_tx, pocsag_dbg_bit, invert, 0) == (-1)) {
+	if (pocsag_out(p_tx, pocsag_out_bit, invert, 0) == (-1)) {
 		ESP_LOGE(LOG_TAG, "Failed to output message bit");
 	}
 	
