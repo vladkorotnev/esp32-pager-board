@@ -62,8 +62,10 @@ int add_message(POCSAG_tx *p_tx,uint32_t capcode,uint32_t func,uint8_t *msg, int
 	uint32_t cw_capcode,cw_mask;
 	POCSAG_batch *cur_btch;
 
-	frame = 1;
-	cw_capcode = capcode << 2;
+	// capcode is: 18 bits address and 3 bits frame assignment (which frame after SYNC to place address and message into)
+	// so take frame offset from last 3 bits and put remainder into the data packet
+	frame = ((capcode & 7) * 2) + 1;
+	cw_capcode = ((capcode >> 3) << 2);
 	cw_capcode |= (func & 3);
 	cw_capcode <<= 11;
 	

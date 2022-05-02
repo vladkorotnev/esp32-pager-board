@@ -92,8 +92,8 @@ void send_message() {
 	int isNum;
 	int invert;
 	
-	cap_code = 102805; //102805, fn=0 -> Super Visor
-	func = 3;
+	cap_code = 822440; //822440 -> Super Visor
+	func = 0;
 	isNum = 0;
 	invert = 1;
 	
