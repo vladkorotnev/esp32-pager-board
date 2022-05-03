@@ -17,6 +17,8 @@ void setup() {
 }
 
 void loop() {
-//	send_message();
-	delay(5000);
+	 // because LOOP priority is better than FreeRTOS task,
+	 // bitbang is done within this function that is called from loop
+	 // instead of setting up a separate task (until I figure out how to)
+	paging_bonk();
 }

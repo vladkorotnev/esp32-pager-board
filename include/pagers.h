@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 
+#define PAGER_NET_PRESENCE_PREAMBLE_INTERVAL 10000 //ms
 #define PAGER_BAUD 1200
 #define PAGER_GPIO 5
 #define PAGER_GPIO_INVERSE 1
