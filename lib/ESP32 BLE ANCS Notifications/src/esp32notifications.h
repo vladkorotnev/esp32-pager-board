@@ -65,6 +65,8 @@ class BLENotifications {
 
         void actionPositive(uint32_t uuid);
         void actionNegative(uint32_t uuid);
+        
+        void requestMoreInfo(uint32_t uuid);
     
         /** 
          * Given a category, return a description of the category in English

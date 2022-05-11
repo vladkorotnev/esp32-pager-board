@@ -36,6 +36,24 @@ void onBLEStateChanged(BLENotifications::State state) {
 //  - rawNotificationData: a pointer to the underlying data. It contains the same information, but is
 //                         not beginner-friendly. For advanced use-cases.
 void onNotificationArrived(const ArduinoNotification * notification, const Notification * rawNotificationData) {
+    if(notification == nullptr) {
+        // Only received basic info at this point, 
+        // request full if not pre-existing and TODO: qualified to show
+        if((rawNotificationData->eventFlags & ANCS::EventFlags::EventFlagPreExisting) != 0) {
+            ESP_LOGI(LOG_TAG, "Received PRE-EXISTING notification 0x%x, discard", rawNotificationData->uuid);
+            return;
+        } 
+        
+        if((rawNotificationData->eventFlags & ANCS::EventFlags::EventFlagSilent) != 0) {
+            ESP_LOGI(LOG_TAG, "Received SILENT notification 0x%x, discard", rawNotificationData->uuid);
+            return;
+        } 
+        
+        ESP_LOGI(LOG_TAG, "Received PARTIAL notification 0x%x, request more info", rawNotificationData->uuid);
+        notifications.requestMoreInfo(rawNotificationData->uuid);
+        return;
+    }
+    
     ESP_LOGI(LOG_TAG, "Received notification 0x%x (category %i)", notification->uuid, notification->category);
             
             // todo: routing based on app or category from some config

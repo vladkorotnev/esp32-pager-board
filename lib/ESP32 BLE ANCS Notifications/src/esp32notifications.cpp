@@ -145,6 +145,10 @@ void BLENotifications::actionNegative(uint32_t uuid) {
 	client->performAction(uuid, uint8_t(ANCS::NotificationActionNegative));
 }
 
+void BLENotifications::requestMoreInfo(uint32_t uuid) {
+    ::xTaskCreatePinnedToCore(&ANCSBLEClient::requestFullInfoTask, "requestFullInfoTask", 10000, (void*)uuid, 5, nullptr, 0);
+}
+
 void BLENotifications::startAdvertising() {
 	ESP_LOGI(LOG_TAG, "startAdvertising()");
 	

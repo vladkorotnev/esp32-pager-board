@@ -66,19 +66,17 @@ void ANCSBLEClient::startClientTask(void * params) {
 	ESP_LOGD(LOG_TAG, "Starting client");
 		const BLEAddress* address = (BLEAddress*)params;
 		sharedInstance->setup(address);
-
-		ANCSNotificationQueue * queue = sharedInstance->notificationQueue;
-		while (1)
-		{
-			if (queue->pendingNotificationExists()) {
-			Notification pending = queue->getNextPendingNotification();
-			  ESP_LOGD(LOG_TAG, "retriveNotificationData: %d", pending.uuid);
-			  sharedInstance->retrieveExtraNotificationData(pending);
-			}
-			delay(500);
-		}
+        
+        vTaskDelete(NULL);
 }
 
+void ANCSBLEClient::requestFullInfoTask(void * params) {
+	ESP_LOGD(LOG_TAG, "Requesting full info");
+    uint32_t uuid = (uint32_t)params;
+    sharedInstance->requestFullInfo(uuid);
+    
+    vTaskDelete(NULL);
+}
 
 void ANCSBLEClient::setup(const BLEAddress * address) {
 	BLEClient*  pClient  = BLEDevice::createClient();
@@ -138,30 +136,6 @@ void ANCSBLEClient::setNotificationRemovedCallback(ble_notification_removed_t cb
 	removedCB = cbNotification;
 }
 
-
-void ANCSBLEClient::retrieveExtraNotificationData(Notification & pending) {
-	  uint8_t uuid[4];
-	  uint32_t notifyUUID = pending.uuid;
-	  uuid[0] = notifyUUID;
-	  uuid[1] = notifyUUID >> 8;
-	  uuid[2] = notifyUUID >> 16;
-	  uuid[3] = notifyUUID >> 24;
-	  
-	  
-	  bool notificationAlreadyInQueue = notificationQueue->contains(pending.uuid);
-	  if (notificationAlreadyInQueue == false) {
-		  notificationQueue->addNotification(notifyUUID, pending, isIncomingCall(pending));
-	  }
-	  
-	  const uint8_t vIdentifier[] = {ANCS::CommandIDGetNotificationAttributes, uuid[0], uuid[1], uuid[2], uuid[3], ANCS::NotificationAttributeIDAppIdentifier};
-	  pControlPointCharacteristic->writeValue((uint8_t *)vIdentifier, 6, true);
-	  const uint8_t vTitle[] = {ANCS::CommandIDGetNotificationAttributes, uuid[0], uuid[1], uuid[2], uuid[3], ANCS::NotificationAttributeIDTitle, 0x0, 0x10};
-	  pControlPointCharacteristic->writeValue((uint8_t *)vTitle, 8, true);
-	  const uint8_t vMessage[] = {ANCS::CommandIDGetNotificationAttributes, uuid[0], uuid[1], uuid[2], uuid[3], ANCS::NotificationAttributeIDMessage, 0x0, 0x10};
-	  pControlPointCharacteristic->writeValue((uint8_t *)vMessage, 8, true);
-	  const uint8_t vDate[] = {ANCS::CommandIDGetNotificationAttributes, uuid[0], uuid[1], uuid[2], uuid[3], ANCS::NotificationAttributeIDDate};
-	  pControlPointCharacteristic->writeValue((uint8_t *)vDate, 6, true);
-}
 
 void ANCSBLEClient::onDataSourceNotify(
   BLERemoteCharacteristic* pNotificationSourceCharacteristic,
@@ -252,7 +226,10 @@ void ANCSBLEClient::onNotificationSourceNotify(
 		pending.eventFlags = pData[1];
 		pending.category = NotificationCategory(pData[2]);
 		pending.categoryCount = pData[3]; 
-		notificationQueue->addPendingNotification(pending);
+        if(!notificationQueue->contains(pending.uuid)) {
+            notificationQueue->addNotification(pending.uuid, pending, isIncomingCall(pending));
+        }
+		notificationCB(nullptr, &pending);
 	}
 }
 
@@ -268,4 +245,22 @@ void ANCSBLEClient::performAction(uint32_t notifyUUID, uint8_t actionID) {
   const uint8_t vPerformAction[] = {ANCS::CommandIDPerformNotificationAction, uuid[0], uuid[1], uuid[2], uuid[3], actionID};
   pControlPointCharacteristic->writeValue((uint8_t *)vPerformAction, (sizeof(vPerformAction)/sizeof(vPerformAction[0])), true);
 
+}
+
+void ANCSBLEClient::requestFullInfo(uint32_t notifyUUID) {
+    ESP_LOGD(LOG_TAG, "requestFullInfo: notification 0x%x", notifyUUID);
+    uint8_t uuid[4];
+    uuid[0] = notifyUUID;
+    uuid[1] = notifyUUID >> 8;
+    uuid[2] = notifyUUID >> 16;
+    uuid[3] = notifyUUID >> 24;
+
+    const uint8_t vIdentifier[] = {ANCS::CommandIDGetNotificationAttributes, uuid[0], uuid[1], uuid[2], uuid[3], ANCS::NotificationAttributeIDAppIdentifier};
+    pControlPointCharacteristic->writeValue((uint8_t *)vIdentifier, 6, true);
+    const uint8_t vTitle[] = {ANCS::CommandIDGetNotificationAttributes, uuid[0], uuid[1], uuid[2], uuid[3], ANCS::NotificationAttributeIDTitle, 0x0, 0x10};
+    pControlPointCharacteristic->writeValue((uint8_t *)vTitle, 8, true);
+    const uint8_t vMessage[] = {ANCS::CommandIDGetNotificationAttributes, uuid[0], uuid[1], uuid[2], uuid[3], ANCS::NotificationAttributeIDMessage, 0x0, 0x10};
+    pControlPointCharacteristic->writeValue((uint8_t *)vMessage, 8, true);
+    const uint8_t vDate[] = {ANCS::CommandIDGetNotificationAttributes, uuid[0], uuid[1], uuid[2], uuid[3], ANCS::NotificationAttributeIDDate};
+    pControlPointCharacteristic->writeValue((uint8_t *)vDate, 6, true);
 }
