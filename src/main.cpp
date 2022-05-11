@@ -7,19 +7,19 @@
 #endif //FOR_IPHONE
 
 void setup() {
-	Serial.begin(115200);
-	
-	paging_init();
+    Serial.begin(115200);
+    
+    paging_init();
     
 #ifdef FOR_IPHONE
-	start_ios_ble();
+    start_ios_ble();
 #endif
 
 #ifdef DUMMY
-	page_message("MESSAGE TEXT", PAGER_ADDR, PAGER_FUNC);
+    page_message("MESSAGE TEXT", PAGER_ADDR, PAGER_FUNC);
 #endif
 
-	vTaskDelete(NULL); // Get rid of setup() and loop() task
+    vTaskDelete(NULL); // Get rid of setup() and loop() task
 }
 
 void loop() {}

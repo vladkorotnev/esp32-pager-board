@@ -36,38 +36,38 @@ void onBLEStateChanged(BLENotifications::State state) {
 //  - rawNotificationData: a pointer to the underlying data. It contains the same information, but is
 //                         not beginner-friendly. For advanced use-cases.
 void onNotificationArrived(const ArduinoNotification * notification, const Notification * rawNotificationData) {
-	ESP_LOGI(LOG_TAG, "Received notification 0x%x (category %i)", notification->uuid, notification->category);
-			
-			// todo: routing based on app or category from some config
-		
-	uint32_t addr = PAGER_ADDR; 
-	uint8_t func = 0;
-	
-	switch(notification->category) {
-		case CategoryIDMissedCall:
-		case CategoryIDVoicemail:
-			func = 0;
-			break;
-		
-		case CategoryIDEmail:
-		case CategoryIDSchedule:
-			func = 1;
-			break;
-			
-		case CategoryIDSocial:
-			func = 2;
-			break;
-			
-		default:
-			func = 0;
-			addr = 9; // service announcements address
-			break;
-	}
-	
-	
-	String msgTotal = String(notification->title + ": " + notification->message);
-	
-	page_message(msgTotal, addr, func);
+    ESP_LOGI(LOG_TAG, "Received notification 0x%x (category %i)", notification->uuid, notification->category);
+            
+            // todo: routing based on app or category from some config
+        
+    uint32_t addr = PAGER_ADDR; 
+    uint8_t func = 0;
+    
+    switch(notification->category) {
+        case CategoryIDMissedCall:
+        case CategoryIDVoicemail:
+            func = 0;
+            break;
+        
+        case CategoryIDEmail:
+        case CategoryIDSchedule:
+            func = 1;
+            break;
+            
+        case CategoryIDSocial:
+            func = 2;
+            break;
+            
+        default:
+            func = 0;
+            addr = 9; // service announcements address
+            break;
+    }
+    
+    
+    String msgTotal = String(notification->title + ": " + notification->message);
+    
+    page_message(msgTotal, addr, func);
 }
 
 
@@ -78,7 +78,7 @@ void onNotificationRemoved(const ArduinoNotification * notification, const Notif
 
 
 void start_ios_ble() {
-	String name = String("POGSAC")+getChipId();
+    String name = String("POGSAC")+getChipId();
     notifications.setConnectionStateChangedCallback(onBLEStateChanged);
     notifications.setNotificationCallback(onNotificationArrived);
     notifications.setRemovedCallback(onNotificationRemoved);
