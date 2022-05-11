@@ -134,7 +134,7 @@ uint32_t get_cws(POCSAG_tx *p_tx, uint32_t *buf, uint32_t len) {
 	uint32_t ret_len = 0;
 	if (p_tx->isEOL) return 0;
 	
-	for (; len >= 4; len -= 4,buf++) {
+	for (; len >= 4 && !p_tx->isEOL; len -= 4,buf++) {
 		if (p_tx->cur_btch == NULL) {
 			buf[0] = p_tx->preamble[p_tx->cur_idx++];
 			ret_len += 4;

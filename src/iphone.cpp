@@ -1,3 +1,8 @@
+//
+// POGSAC: iphone.cpp
+// Bridge module for ANCS (Apple Notification Center Service) to Pager
+//
+
 #include <Arduino.h>
 #include "esp32notifications.h"
 #include "utils.h"
@@ -78,6 +83,6 @@ void start_ios_ble() {
     notifications.setNotificationCallback(onNotificationArrived);
     notifications.setRemovedCallback(onNotificationRemoved);
     notifications.begin(name.c_str());
-    ESP_LOGI(LOG_TAG, "Brought up as %s", name.c_str());
+    ESP_LOGI(LOG_TAG, "Brought up BLE as %s", name.c_str());
 }
 

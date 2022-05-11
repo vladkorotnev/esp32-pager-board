@@ -14,11 +14,12 @@ void setup() {
 #ifdef FOR_IPHONE
 	start_ios_ble();
 #endif
+
+#ifdef DUMMY
+	page_message("MESSAGE TEXT", PAGER_ADDR, PAGER_FUNC);
+#endif
+
+	vTaskDelete(NULL); // Get rid of setup() and loop() task
 }
 
-void loop() {
-	 // because LOOP priority is better than FreeRTOS task,
-	 // bitbang is done within this function that is called from loop
-	 // instead of setting up a separate task (until I figure out how to)
-	paging_bonk();
-}
+void loop() {}

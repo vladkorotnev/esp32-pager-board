@@ -1,8 +1,16 @@
-#include <Arduino.h>
+//
+// POGSAC: pagers.h
+// Configuration of specific pager model quirks
+//
 
+// TODO: Optimize and rework transcode mechanism
+
+#include <Arduino.h>
 
 #ifdef CODE_TABLE_NEC_CYRILLIC
 
+// Transcode function for NEC 21A MAXIMA Cyrillic pager, found experimentally
+// Also works with TRULY SUPER VISOR pager
 void transcode_pager_string(String* source) {
 	source->toUpperCase();
 	
@@ -76,5 +84,5 @@ void transcode_pager_string(String* source) {
 }
 
 #else
-#error "Code table not specify"
+#error "Code table not specified"
 #endif
