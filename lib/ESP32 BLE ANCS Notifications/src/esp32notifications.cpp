@@ -108,7 +108,6 @@ bool BLENotifications::begin(const char * name) {
     
     secu = new NotificationSecurityCallbacks();
 	BLEDevice::setSecurityCallbacks(secu); // @todo memory leak?
-	ESP_LOGW(LOG_TAG, "!! SET secu at 0x%x", secu);
 	
 	startAdvertising();
 	return true;
@@ -146,7 +145,11 @@ void BLENotifications::actionNegative(uint32_t uuid) {
 }
 
 void BLENotifications::requestMoreInfo(uint32_t uuid) {
-    ::xTaskCreatePinnedToCore(&ANCSBLEClient::requestFullInfoTask, "requestFullInfoTask", 10000, (void*)uuid, 5, nullptr, 0);
+    ::xTaskCreatePinnedToCore(&ANCSBLEClient::requestFullInfoTask, "requestFullInfoTask", 4096, (void*)uuid, 5, nullptr, 0);
+}
+
+void BLENotifications::requestBundleId(uint32_t uuid) {
+    ::xTaskCreatePinnedToCore(&ANCSBLEClient::requestAppIdTask, "requestAppIdTask", 4096, (void*)uuid, 5, nullptr, 0);
 }
 
 void BLENotifications::startAdvertising() {

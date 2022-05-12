@@ -70,10 +70,24 @@ void ANCSBLEClient::startClientTask(void * params) {
         vTaskDelete(NULL);
 }
 
+// In task due to a deadlock with BLE callback, todo figure out?
 void ANCSBLEClient::requestFullInfoTask(void * params) {
-	ESP_LOGD(LOG_TAG, "Requesting full info");
+	ESP_LOGD(LOG_TAG, "Requesting full info for show");
     uint32_t uuid = (uint32_t)params;
-    sharedInstance->requestFullInfo(uuid);
+    
+    sharedInstance->requestInfo(uuid, ANCS::NotificationAttributeIDTitle);
+    sharedInstance->requestInfo(uuid, ANCS::NotificationAttributeIDSubtitle);
+    sharedInstance->requestInfo(uuid, ANCS::NotificationAttributeIDMessage);
+    
+    vTaskDelete(NULL);
+}
+
+// In task due to a deadlock with BLE callback, todo figure out?
+void ANCSBLEClient::requestAppIdTask(void * params) {
+	ESP_LOGD(LOG_TAG, "Requesting bundle id");
+    uint32_t uuid = (uint32_t)params;
+    
+    sharedInstance->requestInfo(uuid, ANCS::NotificationAttributeIDAppIdentifier);
     
     vTaskDelete(NULL);
 }
@@ -164,20 +178,29 @@ void ANCSBLEClient::onDataSourceNotify(
 		  {
 			case ANCS::NotificationAttributeIDAppIdentifier:
 				notification->type = message;
+                notification->receptionFlags |= HasBundleID;
 				ESP_LOGD(LOG_TAG, "got type: %s", message.c_str());
+                notificationCB(nullptr, notification);
 				break;
 			case ANCS::NotificationAttributeIDTitle:
 				notification->title = message;
+                notification->receptionFlags |= HasTitle;
 				ESP_LOGD(LOG_TAG, "got title: %s", message.c_str());
+				break;
+            case ANCS::NotificationAttributeIDSubtitle:
+				notification->subtitle = message;
+                notification->receptionFlags |= HasSubtitle;
+				ESP_LOGD(LOG_TAG, "got subtitle: %s", message.c_str());
 				break;
 			case ANCS::NotificationAttributeIDMessage:
 				notification->message = message;
+                notification->receptionFlags |= HasMessage;
 				ESP_LOGD(LOG_TAG, "got message: %s", message.c_str());
 				break;
 		  }
-		  if (!notification->title.empty() && !notification->message.empty()) {
+		  if ((notification->receptionFlags & HAS_ALL_NEEDED_FOR_SHOW) == HAS_ALL_NEEDED_FOR_SHOW) {
 			if (notificationCB && notification->isComplete == false) {
-				ESP_LOGI(LOG_TAG, "got a full notification: %s - %s ", notification->title.c_str(), notification->message.c_str());
+				ESP_LOGI(LOG_TAG, "got a full notification: %s - %s", notification->title.c_str(), notification->message.c_str());
 				const ArduinoNotification arduinoNotification = ArduinoNotification(*notification);
 				notificationCB(&arduinoNotification, notification);
 			}
@@ -247,20 +270,34 @@ void ANCSBLEClient::performAction(uint32_t notifyUUID, uint8_t actionID) {
 
 }
 
-void ANCSBLEClient::requestFullInfo(uint32_t notifyUUID) {
-    ESP_LOGD(LOG_TAG, "requestFullInfo: notification 0x%x", notifyUUID);
+void ANCSBLEClient::requestInfo(uint32_t notifyUUID, ANCS::notification_attribute_id_t attribute) {
+    ESP_LOGD(LOG_TAG, "requestInfo: notification=0x%x attr=%i", notifyUUID, attribute);
     uint8_t uuid[4];
     uuid[0] = notifyUUID;
     uuid[1] = notifyUUID >> 8;
     uuid[2] = notifyUUID >> 16;
     uuid[3] = notifyUUID >> 24;
-
-    const uint8_t vIdentifier[] = {ANCS::CommandIDGetNotificationAttributes, uuid[0], uuid[1], uuid[2], uuid[3], ANCS::NotificationAttributeIDAppIdentifier};
-    pControlPointCharacteristic->writeValue((uint8_t *)vIdentifier, 6, true);
-    const uint8_t vTitle[] = {ANCS::CommandIDGetNotificationAttributes, uuid[0], uuid[1], uuid[2], uuid[3], ANCS::NotificationAttributeIDTitle, 0x0, 0x10};
-    pControlPointCharacteristic->writeValue((uint8_t *)vTitle, 8, true);
-    const uint8_t vMessage[] = {ANCS::CommandIDGetNotificationAttributes, uuid[0], uuid[1], uuid[2], uuid[3], ANCS::NotificationAttributeIDMessage, 0x0, 0x10};
-    pControlPointCharacteristic->writeValue((uint8_t *)vMessage, 8, true);
-    const uint8_t vDate[] = {ANCS::CommandIDGetNotificationAttributes, uuid[0], uuid[1], uuid[2], uuid[3], ANCS::NotificationAttributeIDDate};
-    pControlPointCharacteristic->writeValue((uint8_t *)vDate, 6, true);
+    
+    switch(attribute) {
+        case ANCS::NotificationAttributeIDAppIdentifier:
+        case ANCS::NotificationAttributeIDDate:
+            { // Fixed-size attributes
+                const uint8_t cmd[] = {ANCS::CommandIDGetNotificationAttributes, uuid[0], uuid[1], uuid[2], uuid[3], attribute};
+                pControlPointCharacteristic->writeValue((uint8_t *)cmd, 6, true);
+            }
+            break;
+            
+        case ANCS::NotificationAttributeIDTitle:
+        case ANCS::NotificationAttributeIDSubtitle:
+        case ANCS::NotificationAttributeIDMessage:
+            { // Dynamic size attributes
+                const uint8_t cmd[] = {ANCS::CommandIDGetNotificationAttributes, uuid[0], uuid[1], uuid[2], uuid[3], attribute, 0x0, 0x10};
+                pControlPointCharacteristic->writeValue((uint8_t *)cmd, 8, true);
+            }
+            break;
+            
+        default:
+            ESP_LOGE(LOG_TAG, "[FATAL] Attribute %i not supported", attribute);
+            return;
+    }
 }

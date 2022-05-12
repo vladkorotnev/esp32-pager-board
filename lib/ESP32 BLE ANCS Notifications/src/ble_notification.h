@@ -75,12 +75,22 @@ typedef enum
 
 };
 
+typedef enum {
+    HasBundleID = 1 << 0,
+    HasTitle = 1 << 1,
+    HasSubtitle = 1 << 2,
+    HasMessage = 1 << 3,
+    HasDate = 1 << 4
+} attrib_reception_flags_t;
+
+#define HAS_ALL_NEEDED_FOR_SHOW (HasBundleID | HasTitle | HasSubtitle | HasMessage)
 
 /**
  * A notification, usable by the caller of the library.
  */
 struct Notification {
     std::string title;
+    std::string subtitle;
     std::string message;
     std::string type;
 	uint32_t eventFlags; /**< Bitfield of ANCS::EventFlags flags. */
@@ -90,6 +100,7 @@ struct Notification {
     bool isComplete = false;
 	NotificationCategory category; /**< If it is a call, social media, email, etc. */
 	uint8_t categoryCount; /**< Number of other notifications in this category (ie badge number count). */
+    uint8_t receptionFlags;
 };
 
 /**
@@ -99,6 +110,7 @@ struct Notification {
  */
 struct ArduinoNotification {
     String title;
+    String subtitle;
     String message;
     String type;
 	uint32_t eventFlags; /**< Bitfield of ANCS::EventFlags flags. */
@@ -108,9 +120,11 @@ struct ArduinoNotification {
     bool isComplete = false;
 	NotificationCategory category; /**< If it is a call, social media, email, etc. */
 	uint8_t categoryCount; /**< Number of other notifications in this category (ie badge number count). */
+    attrib_reception_flags_t receptionFlags;
 	
 	ArduinoNotification(const Notification & src) {
 		title = String(src.title.c_str());
+        subtitle = String(src.subtitle.c_str());
 		message = String(src.message.c_str());
 		type = String(src.type.c_str());
 		eventFlags = src.eventFlags;

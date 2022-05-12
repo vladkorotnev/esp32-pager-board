@@ -67,6 +67,7 @@ class BLENotifications {
         void actionNegative(uint32_t uuid);
         
         void requestMoreInfo(uint32_t uuid);
+        void requestBundleId(uint32_t uuid);
     
         /** 
          * Given a category, return a description of the category in English

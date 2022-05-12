@@ -37,6 +37,7 @@ public:
 	static void startClientTask(void *data);
     static void sharedSetup(const BLEAddress * address);
     static void requestFullInfoTask(void * params);
+    static void requestAppIdTask(void * params);
 	
 public:
 	xTaskHandle clientTaskHandle;
@@ -45,7 +46,7 @@ public:
 	void onNotificationSourceNotify(BLERemoteCharacteristic*, uint8_t*, size_t, bool);
 	
 private:
-    void requestFullInfo(uint32_t notifyUUID);
+    void requestInfo(uint32_t notifyUUID, ANCS::notification_attribute_id_t attribute);
 	void setup(const BLEAddress*);
 	
 	/**

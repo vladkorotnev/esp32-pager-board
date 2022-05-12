@@ -26,4 +26,7 @@
 /// Transcode a string in-place to be readable by the pager
 extern void transcode_pager_string(String* source);
 
+typedef std::pair<const char*, const char*> substitution_t;
+typedef substitution_t pager_code_table_t[];
+
 #endif

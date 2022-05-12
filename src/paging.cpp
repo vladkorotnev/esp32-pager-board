@@ -51,10 +51,8 @@ static char LOG_TAG[] = "APL_MOD_POCSAG";
 
 /// A pager message
 typedef struct paging_queue_item {
-    /// Pager capcode
-    uint32_t address;
-    /// Pager tone code
-    uint8_t func;
+    /// Destination
+    paging_destination_t destination;
     /// Message in ASCII
     char* message;
 } paging_queue_item_t;
@@ -142,7 +140,7 @@ void paging_init() {
     }
 #endif //POCSAG_DUMP_BITS
 
-void page_message(String text, uint32_t address, uint8_t function) {
+void page_message(String text, paging_destination_t recipient) {
     // Prepare a message to be displayed by the pager as ASCII
     ESP_LOGI(LOG_TAG, "Begin transcode: %s", text.c_str());
     transcode_pager_string(&text);
@@ -158,8 +156,7 @@ void page_message(String text, uint32_t address, uint8_t function) {
     
     // Enqueue the message
     paging_queue_item_t message;
-    message.address = address;
-    message.func = function;
+    message.destination = recipient;
     message.message = strMsg;
     xQueueSend(paging_queue, (void*) &message, 10);
 }
@@ -177,10 +174,10 @@ void paging_bonk() {
     
     // Wait for any messages in the message queue
     if(xQueueReceive(paging_queue, (void*)&message, pdMS_TO_TICKS( PAGER_NET_PRESENCE_PREAMBLE_INTERVAL )) == pdTRUE) {
-        ESP_LOGI(LOG_TAG, "Task got message... addr=%i func=%i text=%s", message.address, message.func, message.message);
+        ESP_LOGI(LOG_TAG, "Task got message... addr=%i func=%i text=%s", message.destination.address, message.destination.func, message.message);
         
         // Add them into the transmission
-        if (add_message(p_tx, message.address, message.func, (uint8_t*)message.message, 0) == (-1)) {
+        if (add_message(p_tx, message.destination.address, message.destination.func, (uint8_t*)message.message, 0) == (-1)) {
             ESP_LOGE(LOG_TAG, "Failed to append message");
         }
         
